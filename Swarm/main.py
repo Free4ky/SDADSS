@@ -9,18 +9,19 @@ from scipy.optimize import fmin
 
 mpl.use('Qt5Agg')
 
+
 def rastrigin(*X, **kwargs):
     A = kwargs.get('A')
-    return A + sum([(x**2 - A * np.cos(2 * math.pi * x)) for x in X])
+    return A + sum([(x ** 2 - A * np.cos(2 * math.pi * x)) for x in X])
+
 
 if __name__ == '__main__':
-    X = np.linspace(-4, 4, 200)
-    Y = np.linspace(-4, 4, 200)
+    X = np.linspace(-4, 4, 20)
+    Y = np.linspace(-4, 4, 20)
 
     X, Y = np.meshgrid(X, Y)
 
     Z = rastrigin(X, Y, A=10)
-
     fig = plt.figure()
     ax = fig.gca(projection='3d')
 
