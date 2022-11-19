@@ -3,7 +3,7 @@ import math
 import numpy as np
 from particle import Particle
 from visualizer import vizualize
-
+from copy import deepcopy
 """
         swarmsize - размер роя (количество частиц)
         minvalues - список, задающий минимальные значения для каждой координаты частицы
@@ -74,7 +74,7 @@ class Swarm(ABC):
         if (self.globalBestFinalFunc == None or
                 finalFunc < self.globalBestFinalFunc):
             self.globalBestFinalFunc = finalFunc
-            self.globalBestPosition = position
+            self.globalBestPosition = deepcopy(position)
         return finalFunc
 
 
@@ -142,6 +142,7 @@ if __name__ == '__main__':
 
         swarm.nextIteration()
 
+    print(swarm.globalBestPosition, swarm.globalBestFinalFunc)
     vizualize(swarm.domain,
               swarm._finalFunc(swarm.domain),
               swarm.globalBestPosition[0], # x

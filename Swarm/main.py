@@ -1,11 +1,8 @@
 from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits import mplot3d
 import math
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
-from scipy.optimize import fmin
 
 mpl.use('Qt5Agg')
 
@@ -16,8 +13,8 @@ def rastrigin(*X, **kwargs):
 
 
 if __name__ == '__main__':
-    X = np.linspace(-4, 4, 20)
-    Y = np.linspace(-4, 4, 20)
+    X = np.linspace(-4, 4, 200)
+    Y = np.linspace(-4, 4, 200)
 
     X, Y = np.meshgrid(X, Y)
 
