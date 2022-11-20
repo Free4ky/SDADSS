@@ -22,7 +22,7 @@ def split_2d(array, splits):
     return temp.reshape(-1, int(temp.shape[0] ** 0.5), *temp.shape[1:])
 
 
-def split_mesh(mesh_grid, splits: tuple = (8, 8)):
+def split_mesh(mesh_grid, splits: tuple = (4, 4)):
     meshes = []
     for i in mesh_grid:
         meshes.append(split_2d(i, splits))
