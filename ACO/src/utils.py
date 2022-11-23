@@ -12,6 +12,10 @@ def X2(X: tuple):
     return sum(x ** 2 for x in X)
 
 
+def schwefel(X: tuple):
+    return sum([(-x * np.sin(np.sqrt(np.abs(x)))) for x in X])
+
+
 def batch_sample(l: list, sample_size: int = 32) -> list:
     return [l[i] for i in random.sample(range(len(l)), sample_size)]
 

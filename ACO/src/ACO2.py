@@ -3,11 +3,12 @@ from visualizer import visualize
 
 
 class Ant:
-    def __init__(self, chunk: tuple, coord: tuple):
+    def __init__(self, chunk: tuple, coord: tuple, level=0):
+        self.level = level
         self.coord = coord
         self.chunk = chunk
 
-    def move(self, graph, chunk_coord_map, pheromones, func, Q=10, a=1, b=1):
+    def move(self, graph, chunk_coord_map, pheromones, func, level, Q=10, a=1, b=1):
         if isinstance(graph, list):
             possible_chunks = graph
         else:
@@ -21,7 +22,7 @@ class Ant:
             c = chunk_coord_map[chunk]
             possible_coords.append(c)
             current_pheromones.append(pheromones[chunk])
-            weights.append((func(self.coord) - func(c)))
+            weights.append(func(c) - (func(self.coord)))
 
         assert len(current_pheromones) == len(possible_coords) == len(weights)
 
@@ -29,11 +30,12 @@ class Ant:
                               map(lambda t: t ** a, current_pheromones),
                               map(lambda n: abs(n) ** b, weights)))
         P = np.array(
-            [(t ** a * abs(f) ** b) / denominator if f > 0 else 0 for t, f in zip(current_pheromones, weights)])
+            [(t ** a * abs(f) ** b) / denominator if f < 0 else 0 for t, f in zip(current_pheromones, weights)])
         m = np.argmax(P)
         self.chunk = possible_chunks[m]
         pheromones[self.chunk] += Q * abs(weights[m])  # (1 - p) * pheromones[self.chunk]
         self.coord = chunk_coord_map[self.chunk]
+        self.level = level
 
 
 def build_graph(mesh: tuple):
@@ -55,10 +57,6 @@ class ACO:
         self.min_values = np.array([minval] * dimension)
         self.max_values = np.array([maxval] * dimension)
         self.domain, self.coords = self.get_domain()
-        self.splits = split_mesh(self.domain)
-        self.graph = build_graph(self.splits)  # edges between areas
-        self.pheromones = dict(zip(self.graph.keys(), [1e-4] * len(self.graph)))
-        self.ants = self.init_ants(self.splits)
 
     def get_domain(self, num_points=256):
         params = []
@@ -82,10 +80,10 @@ class ACO:
         temp = [Ant(*i) for i in coords for _ in range(1)]
         return temp
 
-    def find_ants(self, chunk):
+    def find_ants(self, chunk, level):
         return [ant for ant in self.ants if ant.chunk == chunk]
 
-    def find_neighbour_ants(self, chunk, graph):
+    def find_neighbour_ants(self, chunk, graph, level):
         neighbour_chunks = graph.get(chunk)
         if neighbour_chunks is None:
             return
@@ -104,22 +102,21 @@ class ACO:
         pheromones = dict(zip(graph.keys(), [chunk_pheromone] * len(graph)))
         if level == 0:
             current_ants = self.ants = self.init_ants(splits)
-            neighbour_ants = None
+            neighbour_ants = []
             visualize(func, self.domain, points=list(map(lambda x: x.coord, self.ants)), preview=True)
         else:
-            current_ants = self.find_ants(chunk_number)
-            neighbour_ants = self.find_neighbour_ants(chunk_number, old_graph)
-        print(f'{level}: {len(current_ants)}, {graph}, shape: {splits[0].shape}')
-        if len(current_ants) == 0:
-            return
+            current_ants = self.find_ants(chunk_number, level)
+            if len(current_ants) == 0:
+                return
+            neighbour_ants = self.find_neighbour_ants(chunk_number, old_graph, level)
+        print(f'{level}: {len(current_ants)}, {len(neighbour_ants)}, {graph}, shape: {splits[0].shape}')
         chunk_cord_map = get_map(list(self.init_coord(splits)))
         possible_chunks = [(i, j) for i in range(splits[0].shape[0]) for j in range(splits[0].shape[1])]
         for ant in current_ants:
-            ant.move(possible_chunks, chunk_cord_map, pheromones, func)
+            ant.move(possible_chunks, chunk_cord_map, pheromones, func, level=level)
         if level > 1:
-            # possible_chunks = [(i, j) for i in range(splits[0].shape[0]) for j in range(splits[0].shape[1])]
             for ant in old_neighbours:
-                ant.move(possible_chunks, chunk_cord_map, pheromones, func)
+                ant.move(possible_chunks, chunk_cord_map, pheromones, func, level=level)
         for k, v in pheromones.items():
             pheromones[k] *= (1 - p)
         # to do: find chunks without ants, exclude them
@@ -138,8 +135,8 @@ class ACO:
 
 
 if __name__ == '__main__':
-    a = ACO()
-    func = rastrigin
+    a = ACO(minval=-400, maxval=400)
+    func = schwefel
     # print(a.pheromones)
     # print(list(map(lambda x: x.chunk, a.ants)))
     a.optimize(func, a.domain)
